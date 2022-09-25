@@ -1,0 +1,46 @@
+version: '3.8'
+services:
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: 'php artisan serve --host=0.0.0.0'
+    volumes:
+      - .:/app
+    ports:
+      - 8000:8000
+    depends_on:
+      - admin_db
+
+  admin_queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: 'php artisan queue:work'
+    depends_on:
+      - admin_db
+
+  admin_db:
+    image: mysql:5.7.22
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: microservice
+      MYSQL_USER: microservice
+      MYSQL_PASSWORD: microservice
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./dbdata:/var/lib/mysql
+    ports:
+      - 3306:3306
+
+  phpmyadmin:
+    depends_on:
+      - admin_db
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - 8090:80
+    environment:
+      PMA_HOST: admin_db
+      MYSQL_ROOT_PASSWORD: root
+      UPLOAD_LIMIT: 100M
